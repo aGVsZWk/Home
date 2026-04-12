@@ -5,7 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02810e91-a987-4f13-a9e1-9eebc29fb591" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/装修风格/原木风参考/视频/img_1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/摇人/摇人.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水/img.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水/【全网最细】零冷水怎么做_做不做_大循环和小循环的区别_.mp4" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水/零冷水.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水替代/零冷水替代.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/装修风格/客厅/img.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/装修风格/客厅/回音壁.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/装修风格/原木风参考/视频/哈哈哈，小红书抄作业成功！！！_.md" beforeDir="false" afterPath="$PROJECT_DIR$/装修风格/原木风参考/视频/哈哈哈，小红书抄作业成功！！！_.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/装修风格/管路/无冷水.md" beforeDir="false" afterPath="$PROJECT_DIR$/关注.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/购物车.md" beforeDir="false" afterPath="$PROJECT_DIR$/购物车.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,11 +51,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/装修风格/参考/视频" />
-      <recent name="$PROJECT_DIR$/装修风格/参考图/客厅" />
-      <recent name="$PROJECT_DIR$/装修风格" />
-      <recent name="$PROJECT_DIR$/3D模型" />
-      <recent name="$PROJECT_DIR$/户型图" />
+      <recent name="$PROJECT_DIR$/施工" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/装修风格/管路/水路" />
+      <recent name="$PROJECT_DIR$/装修风格/管路" />
+      <recent name="$PROJECT_DIR$/装修风格/管路/零冷水" />
     </key>
   </component>
   <component name="SharedIndexes">
@@ -64,7 +73,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776006979580</updated>
-      <workItem from="1776006982897" duration="1620000" />
+      <workItem from="1776006982897" duration="6753000" />
     </task>
     <servers />
   </component>
