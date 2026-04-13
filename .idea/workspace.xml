@@ -5,15 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02810e91-a987-4f13-a9e1-9eebc29fb591" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/摇人/摇人.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水/img.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水/【全网最细】零冷水怎么做_做不做_大循环和小循环的区别_.mp4" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水/零冷水.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/施工/管路/水路/零冷水替代/零冷水替代.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/装修风格/客厅/img.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/装修风格/客厅/回音壁.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/装修风格/原木风参考/视频/哈哈哈，小红书抄作业成功！！！_.md" beforeDir="false" afterPath="$PROJECT_DIR$/装修风格/原木风参考/视频/哈哈哈，小红书抄作业成功！！！_.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/装修风格/管路/无冷水.md" beforeDir="false" afterPath="$PROJECT_DIR$/关注.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/购物车.md" beforeDir="false" afterPath="$PROJECT_DIR$/购物车.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -26,6 +17,15 @@
       <entry key="_/Users/lukerivel/Desktop/Home" value="3CGLUwEDCBriaJdSTud4DlllVg8" />
     </persistenceIdMap>
   </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Agent" />
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="chat-panel" value="GPT-5.3-Codex" />
+      <entry key="agent-panel" value="GPT-5.3-Codex" />
+    </selectedModels>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -33,6 +33,9 @@
   "associatedIndex": 2
 }]]></component>
   <component name="ProjectId" id="3CGLUwEDCBriaJdSTud4DlllVg8" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -51,11 +54,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/施工/隔音" />
       <recent name="$PROJECT_DIR$/施工" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/装修风格/管路/水路" />
       <recent name="$PROJECT_DIR$/装修风格/管路" />
-      <recent name="$PROJECT_DIR$/装修风格/管路/零冷水" />
     </key>
   </component>
   <component name="SharedIndexes">
@@ -73,7 +76,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776006979580</updated>
-      <workItem from="1776006982897" duration="6753000" />
+      <workItem from="1776006982897" duration="11629000" />
     </task>
     <servers />
   </component>
