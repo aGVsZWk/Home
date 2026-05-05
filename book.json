@@ -1,0 +1,12 @@
+{
+  "title": "Home Wiki",
+  "description": "装修、采购和施工资料库",
+  "author": "lukerivel",
+  "language": "zh-hans",
+  "plugins": [],
+  "pluginsConfig": {
+    "theme-default": {
+      "showLevel": true
+    }
+  }
+}

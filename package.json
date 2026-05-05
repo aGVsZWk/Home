@@ -1,0 +1,13 @@
+{
+  "name": "home-wiki",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Home decoration and purchase wiki powered by HonKit.",
+  "scripts": {
+    "wiki:build": "honkit build",
+    "wiki:serve": "honkit serve --port 4000"
+  },
+  "devDependencies": {
+    "honkit": "^6.1.7"
+  }
+}
