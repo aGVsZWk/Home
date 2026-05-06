@@ -1,0 +1,10 @@
+.markdown-section table {
+  table-layout: auto;
+  width: 100%;
+}
+
+.markdown-section table th:first-child,
+.markdown-section table td:first-child {
+  min-width: 4.5em;
+  white-space: nowrap;
+}
