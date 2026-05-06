@@ -4,6 +4,8 @@
 
 ## 快速开始
 
+需要 Node.js 18.17 或更高版本。
+
 ```bash
 npm install
 npm run wiki:serve
@@ -21,10 +23,9 @@ npm run wiki:build
 
 ## 内容入口
 
-- [购物车](购物车.md)
+- [装修方案](装修方案/README.md)
+- [空间方案](空间方案/README.md)
 - [施工](施工/README.md)
-- [装修风格](装修风格/README.md)
-- [户型图](户型图/README.md)
-- [3D 模型](3D模型/README.md)
-- [摇人](摇人/摇人.md)
-- [关注来源](关注.md)
+- [采购](采购/README.md)
+- [素材库](素材库/README.md)
+- [外部资源](外部资源/README.md)
