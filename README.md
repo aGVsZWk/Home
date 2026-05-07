@@ -23,6 +23,7 @@ npm run wiki:build
 
 ## 内容入口
 
+- [51天装修流程表](51天装修流程表/README.md)
 - [装修方案](装修方案/README.md)
 - [空间方案](空间方案/README.md)
 - [施工](施工/README.md)

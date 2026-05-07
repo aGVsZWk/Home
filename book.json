@@ -3,7 +3,9 @@
   "description": "装修、采购和施工资料库",
   "author": "lukerivel",
   "language": "zh-hans",
-  "plugins": [],
+  "plugins": [
+    "toggle-chapters"
+  ],
   "pluginsConfig": {
     "theme-default": {
       "showLevel": true

@@ -332,12 +332,18 @@ def pdf_page_markdown(text: str) -> str:
     return "\n\n".join(parts)
 
 
-def render_pdf_pages(src: Path, out_file: Path) -> tuple[Path, list[Path]]:
-    asset_dir = out_file.parent / f"assets_{sha8(src.relative_to(SOURCE_ROOT).as_posix())}" / "pdf-pages"
+def render_pdf_pages_from_file(
+    pdf_file: Path,
+    out_file: Path,
+    asset_key: str,
+    *,
+    dpi: int = 180,
+) -> tuple[Path, list[Path]]:
+    asset_dir = out_file.parent / f"assets_{sha8(asset_key)}" / "pdf-pages"
     asset_dir.mkdir(parents=True, exist_ok=True)
     prefix = asset_dir / "page"
     result = subprocess.run(
-        ["pdftoppm", "-jpeg", "-r", "120", str(src), str(prefix)],
+        ["pdftoppm", "-jpeg", "-r", str(dpi), str(pdf_file), str(prefix)],
         capture_output=True,
         text=True,
         timeout=600,
@@ -346,6 +352,86 @@ def render_pdf_pages(src: Path, out_file: Path) -> tuple[Path, list[Path]]:
         raise RuntimeError(result.stderr.strip() or "pdftoppm failed")
     pages = sorted(asset_dir.glob("page-*.jpg"), key=lambda p: p.name)
     return asset_dir, pages
+
+
+def render_pdf_pages(src: Path, out_file: Path) -> tuple[Path, list[Path]]:
+    return render_pdf_pages_from_file(
+        src,
+        out_file,
+        src.relative_to(SOURCE_ROOT).as_posix(),
+    )
+
+
+def crop_image_whitespace(image_file: Path, *, padding: int = 36, threshold: int = 245) -> None:
+    with Image.open(image_file) as image:
+        rgb = image.convert("RGB")
+        gray = rgb.convert("L")
+        mask = gray.point(lambda pixel: 255 if pixel < threshold else 0, "1")
+        bbox = mask.getbbox()
+        if not bbox:
+            return
+
+        left, top, right, bottom = bbox
+        left = max(0, left - padding)
+        top = max(0, top - padding)
+        right = min(rgb.width, right + padding)
+        bottom = min(rgb.height, bottom + padding)
+
+        if (left, top, right, bottom) == (0, 0, rgb.width, rgb.height):
+            return
+        rgb.crop((left, top, right, bottom)).save(image_file, quality=92, optimize=True)
+
+
+def crop_pdf_page_whitespace(page_images: Iterable[Path]) -> None:
+    for image in page_images:
+        crop_image_whitespace(image)
+
+
+def crop_image_to_table_grid(image_file: Path, *, padding: int = 18, threshold: int = 235) -> None:
+    with Image.open(image_file) as image:
+        gray = image.convert("L")
+        width, height = gray.size
+        pixels = gray.load()
+
+        column_counts = []
+        for x in range(width):
+            count = 0
+            for y in range(height):
+                if pixels[x, y] < threshold:
+                    count += 1
+            column_counts.append(count)
+
+        row_counts = []
+        for y in range(height):
+            count = 0
+            for x in range(width):
+                if pixels[x, y] < threshold:
+                    count += 1
+            row_counts.append(count)
+
+        table_columns = [x for x, count in enumerate(column_counts) if count > height * 0.15]
+        table_rows = [y for y, count in enumerate(row_counts) if count > width * 0.25]
+        if not table_columns or not table_rows:
+            return
+
+        left = max(0, min(table_columns) - padding)
+        right = min(width, max(table_columns) + padding)
+        top = max(0, min(table_rows) - padding)
+        bottom = min(height, max(table_rows) + padding)
+        if right - left < width * 0.25 or bottom - top < height * 0.25:
+            return
+
+        image.convert("RGB").crop((left, top, right, bottom)).save(
+            image_file,
+            quality=92,
+            optimize=True,
+        )
+
+
+def crop_flow_sheet_images(page_images: Iterable[Path]) -> None:
+    for image in page_images:
+        crop_image_whitespace(image)
+        crop_image_to_table_grid(image)
 
 
 def page_span(start: int, end: int) -> str:
@@ -468,7 +554,6 @@ def convert_bikeng_manual_pdf(src: Path, out_file: Path, original_pdf: Path, pag
                 )
             child_lines.append("")
         else:
-            child_lines.extend(["## 页面图片", ""])
             for manual_page in range(start, end + 1):
                 pdf_page = manual_page + 2
                 child_lines.append(
@@ -476,7 +561,7 @@ def convert_bikeng_manual_pdf(src: Path, out_file: Path, original_pdf: Path, pag
                         page_images,
                         page_path,
                         pdf_page,
-                        f"{title} - 手册第 {manual_page} 页",
+                        title,
                     )
                 )
                 child_lines.append("")
@@ -518,7 +603,7 @@ def convert_pdf(src: Path, out_file: Path) -> dict:
     image_body = []
     for index, image in enumerate(page_images, start=1):
         rel_image = image.relative_to(out_file.parent)
-        image_body.append(f"## 页面图片 {index}\n\n![第 {index} 页]({wrap_angle(rel_image)})")
+        image_body.append(f"![{src.stem}]({wrap_angle(rel_image)})")
 
     pdf_link = f"[打开原始 PDF]({md_link(original_pdf.relative_to(out_file.parent))})"
     body_parts = [f"> {pdf_link}\n"]
@@ -531,13 +616,14 @@ def convert_pdf(src: Path, out_file: Path) -> dict:
         body_parts.extend(["## 可复制文字", text_body])
         status = {"status": "ok", "method": "pdftotext+pdftoppm", "pages": len(page_images)}
     else:
-        body_parts.append("> 这个 PDF 未提取到可复制文字，可能是扫描图或图片型 PDF；上方已保留页面图片。")
         status = {
-            "status": "partial" if not page_images else "ok",
+            "status": "ok" if page_images else "partial",
             "method": "pdftoppm",
             "pages": len(page_images),
             "warning": "no text extracted",
         }
+        if not page_images:
+            body_parts.append("> 这个 PDF 未提取到可复制文字，可能是扫描图或图片型 PDF。")
     write_page(out_file, page_header(src.stem, src, "PDF") + "\n\n".join(body_parts))
     return status
 
@@ -557,6 +643,153 @@ def markdown_table(rows: list[list[object]]) -> str:
         padded = list(row) + [""] * (width - len(row))
         lines.append("| " + " | ".join(table_cell(cell) for cell in padded) + " |")
     return "\n".join(lines)
+
+
+def xlsx_pdf_cell_text(value: object) -> str:
+    text = clean_text(value)
+    text = text.replace("<br>", "\n")
+    return text
+
+
+def xlsx_col_widths(rows: list[list[object]], max_width: float = 2200) -> list[float]:
+    if not rows:
+        return []
+    width = max(len(row) for row in rows)
+    widths: list[float] = []
+    for col_index in range(width):
+        samples = [
+            xlsx_pdf_cell_text(row[col_index])
+            for row in rows
+            if col_index < len(row) and has_content(row[col_index])
+        ]
+        if not samples:
+            widths.append(44)
+            continue
+        max_line = 0
+        avg_line = 0
+        for sample in samples[:80]:
+            lines = sample.splitlines() or [sample]
+            max_line = max(max_line, *(len(line) for line in lines))
+            avg_line += max(len(line) for line in lines)
+        avg_line = avg_line / max(min(len(samples), 80), 1)
+        estimated = max(48, min(220, max_line * 4.2, avg_line * 5.8))
+        widths.append(estimated)
+
+    total = sum(widths)
+    if total > max_width and total > 0:
+        ratio = max_width / total
+        widths = [max(36, width * ratio) for width in widths]
+    return widths
+
+
+def build_xlsx_pdf(src: Path, pdf_file: Path) -> int:
+    from xml.sax.saxutils import escape as xml_escape
+
+    from reportlab.lib import colors
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+    from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    try:
+        pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
+    except Exception:
+        pass
+
+    values_wb = load_workbook(src, read_only=True, data_only=True)
+    formula_wb = load_workbook(src, read_only=True, data_only=False)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "XlsxSheetTitle",
+        parent=styles["Heading1"],
+        fontName="STSong-Light",
+        fontSize=18,
+        leading=22,
+        spaceAfter=12,
+    )
+    cell_style = ParagraphStyle(
+        "XlsxCell",
+        parent=styles["BodyText"],
+        fontName="STSong-Light",
+        fontSize=7.5,
+        leading=9.5,
+        wordWrap="CJK",
+    )
+    header_style = ParagraphStyle(
+        "XlsxHeaderCell",
+        parent=cell_style,
+        fontName="STSong-Light",
+        fontSize=8,
+        leading=10,
+    )
+
+    sheet_rows: list[tuple[str, list[list[object]]]] = []
+    for sheet_name in values_wb.sheetnames:
+        value_ws = values_wb[sheet_name]
+        formula_ws = formula_wb[sheet_name]
+        rows = iter_sheet_rows(value_ws, formula_ws)
+        if rows:
+            sheet_rows.append((sheet_name, rows))
+    values_wb.close()
+    formula_wb.close()
+
+    max_table_width = 2200
+    page_width = 900
+    for _, rows in sheet_rows:
+        widths = xlsx_col_widths(rows, max_table_width)
+        if widths:
+            page_width = max(page_width, min(max_table_width + 72, sum(widths) + 72))
+
+    story = []
+    for sheet_index, (sheet_name, rows) in enumerate(sheet_rows):
+        if sheet_index:
+            story.append(PageBreak())
+        story.append(Paragraph(xml_escape(sheet_name), title_style))
+        story.append(Spacer(1, 6))
+        widths = xlsx_col_widths(rows, max_table_width)
+        data = []
+        for row_index, row in enumerate(rows):
+            padded = list(row) + [""] * (len(widths) - len(row))
+            style = header_style if row_index == 0 else cell_style
+            data.append(
+                [
+                    Paragraph(
+                        xml_escape(xlsx_pdf_cell_text(cell)).replace("\n", "<br/>"),
+                        style,
+                    )
+                    for cell in padded[: len(widths)]
+                ]
+            )
+        table = Table(data, colWidths=widths, repeatRows=1 if len(data) > 1 else 0)
+        table.setStyle(
+            TableStyle(
+                [
+                    ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#c8c8c8")),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f2f2f2")),
+                ]
+            )
+        )
+        story.append(table)
+
+    if not story:
+        story.append(Paragraph("未提取到可转换的表格内容。", cell_style))
+
+    pdf_file.parent.mkdir(parents=True, exist_ok=True)
+    doc = SimpleDocTemplate(
+        str(pdf_file),
+        pagesize=(page_width, 2200),
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=36,
+        bottomMargin=36,
+    )
+    doc.build(story)
+    return len(sheet_rows)
 
 
 def iter_sheet_rows(value_ws, formula_ws) -> list[list[object]]:
@@ -593,24 +826,38 @@ def iter_sheet_rows(value_ws, formula_ws) -> list[list[object]]:
 
 
 def convert_xlsx(src: Path, out_file: Path) -> dict:
-    values_wb = load_workbook(src, read_only=True, data_only=True)
-    formula_wb = load_workbook(src, read_only=True, data_only=False)
-    parts = [page_header(src.stem, src, src.suffix.lower().lstrip(".").upper())]
-    converted_sheets = 0
-    for sheet_name in values_wb.sheetnames:
-        value_ws = values_wb[sheet_name]
-        formula_ws = formula_wb[sheet_name]
-        rows = iter_sheet_rows(value_ws, formula_ws)
-        if not rows:
-            continue
-        converted_sheets += 1
-        parts.append(f"## 工作表：{sheet_name}\n\n{markdown_table(rows)}")
-    values_wb.close()
-    formula_wb.close()
-    if converted_sheets == 0:
-        parts.append("> 未提取到可转换的表格内容。\n")
-    write_page(out_file, "\n\n".join(parts))
-    return {"status": "ok", "sheets": converted_sheets}
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    pdf_file = out_file.parent / f"{safe_filename_stem(src.stem)}.pdf"
+    if pdf_file.exists() and pdf_file.resolve() != src.resolve():
+        pdf_file = out_file.parent / f"{safe_filename_stem(src.stem)}-{sha8(src.as_posix())}.pdf"
+
+    converted_sheets = build_xlsx_pdf(src, pdf_file)
+    rel_src = src.relative_to(SOURCE_ROOT).as_posix()
+    enlarge_flow_sheet = rel_src.startswith("装修避坑宝典/51天装修流程表/")
+    _, page_images = render_pdf_pages_from_file(
+        pdf_file,
+        out_file,
+        rel_src,
+        dpi=240 if enlarge_flow_sheet else 160,
+    )
+    if enlarge_flow_sheet:
+        crop_flow_sheet_images(page_images)
+    pdf_link = f"[打开 PDF]({md_link(pdf_file.relative_to(out_file.parent))})"
+    parts = [page_header(src.stem, src, src.suffix.lower().lstrip(".").upper()), f"> {pdf_link}", ""]
+    if page_images:
+        for image in page_images:
+            rel_image = image.relative_to(out_file.parent)
+            parts.append(f"![{src.stem}]({wrap_angle(rel_image)})")
+            parts.append("")
+    else:
+        parts.append("> 未渲染出图片。")
+    write_page(out_file, "\n".join(parts))
+    return {
+        "status": "ok" if page_images else "partial",
+        "method": "xlsx-to-pdf-to-images",
+        "sheets": converted_sheets,
+        "pages": len(page_images),
+    }
 
 
 def printable_ratio(text: str) -> float:
@@ -819,7 +1066,7 @@ def make_root_indexes(out_dir: Path, records: list[dict], errors: list[dict]) ->
         "## 使用说明",
         "",
         "- Word、Excel 已尽量转为正文或 Markdown 表格。",
-        "- PDF 已渲染为页面图片，并保留可复制文字和原始 PDF 附件。",
+        "- PDF 已渲染为图片，并保留可复制文字和原始 PDF 附件。",
         "- 图片已复制到对应目录并生成引用页。",
         "- 旧版 `.xls` 因格式限制，输出为可读文本片段，表格结构可能不完整。",
         "",

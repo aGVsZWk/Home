@@ -7,10 +7,12 @@
     "node": ">=18.17"
   },
   "scripts": {
+    "postinstall": "node scripts/patch-toggle-chapters.cjs",
     "wiki:build": "honkit build",
     "wiki:serve": "honkit serve --port 4000"
   },
   "devDependencies": {
-    "honkit": "^6.1.7"
+    "honkit": "^6.1.7",
+    "honkit-plugin-toggle-chapters": "^0.0.1"
   }
 }
