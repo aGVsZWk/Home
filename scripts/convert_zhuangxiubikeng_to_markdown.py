@@ -428,10 +428,24 @@ def crop_image_to_table_grid(image_file: Path, *, padding: int = 18, threshold: 
         )
 
 
+def upscale_image_min_width(image_file: Path, *, min_width: int = 1400) -> None:
+    with Image.open(image_file) as image:
+        if image.width >= min_width:
+            return
+        ratio = min_width / image.width
+        size = (min_width, int(image.height * ratio))
+        image.convert("RGB").resize(size, Image.Resampling.LANCZOS).save(
+            image_file,
+            quality=92,
+            optimize=True,
+        )
+
+
 def crop_flow_sheet_images(page_images: Iterable[Path]) -> None:
     for image in page_images:
         crop_image_whitespace(image)
         crop_image_to_table_grid(image)
+        upscale_image_min_width(image)
 
 
 def page_span(start: int, end: int) -> str:
@@ -699,14 +713,6 @@ def build_xlsx_pdf(src: Path, pdf_file: Path) -> int:
     values_wb = load_workbook(src, read_only=True, data_only=True)
     formula_wb = load_workbook(src, read_only=True, data_only=False)
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        "XlsxSheetTitle",
-        parent=styles["Heading1"],
-        fontName="STSong-Light",
-        fontSize=18,
-        leading=22,
-        spaceAfter=12,
-    )
     cell_style = ParagraphStyle(
         "XlsxCell",
         parent=styles["BodyText"],
@@ -744,8 +750,6 @@ def build_xlsx_pdf(src: Path, pdf_file: Path) -> int:
     for sheet_index, (sheet_name, rows) in enumerate(sheet_rows):
         if sheet_index:
             story.append(PageBreak())
-        story.append(Paragraph(xml_escape(sheet_name), title_style))
-        story.append(Spacer(1, 6))
         widths = xlsx_col_widths(rows, max_table_width)
         data = []
         for row_index, row in enumerate(rows):
@@ -840,7 +844,7 @@ def convert_xlsx(src: Path, out_file: Path) -> dict:
         rel_src,
         dpi=240 if enlarge_flow_sheet else 160,
     )
-    if enlarge_flow_sheet:
+    if enlarge_flow_sheet or rel_src.startswith("装修避坑宝典/2025年装修全套资料【全网最齐】附赠/"):
         crop_flow_sheet_images(page_images)
     pdf_link = f"[打开 PDF]({md_link(pdf_file.relative_to(out_file.parent))})"
     parts = [page_header(src.stem, src, src.suffix.lower().lstrip(".").upper()), f"> {pdf_link}", ""]
