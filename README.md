@@ -29,3 +29,4 @@ npm run wiki:build
 - [采购](采购/README.md)
 - [素材库](素材库/README.md)
 - [外部资源](外部资源/README.md)
+- [装修避坑手册打印（100页）](装修避坑手册打印（100页）.md)
